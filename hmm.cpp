@@ -1,5 +1,5 @@
 #include "hmm.hpp"
-#include <iostream>
+
 #include <cmath>
 #include <limits>
 
@@ -12,7 +12,7 @@ Hmm::Hmm(int numberofstates, int numberofemissions) {
      */
     numberofstates_ = numberofstates;
     numberofemissions_ = numberofemissions;
-
+    
     A_ = new double*[numberofstates_];
     for (int i = 0; i < numberofstates_; ++i) {
 		A_[i] = new double[numberofstates_];
@@ -22,31 +22,28 @@ Hmm::Hmm(int numberofstates, int numberofemissions) {
 		B_[i] = new double[numberofemissions_];
 	}
     pi_ = new double[numberofstates_];
-
+    
     for (int i = 0; i < numberofstates_; ++i) {
-      for (int j = 0; j < numberofstates_; ++j) {
-        if(i==0){A_[i][j] = 2/(numberofstates_+1);}
-        else{A_[i][j] = (double)(1/(numberofstates_+1));};
+      for (int j = 0; j < numberofstates_; ++j) {      
+        A_[i][j] = 0;
       }
     }
-
+    
     for (int i = 0; i < numberofstates_; ++i) {
       for (int j = 0; j < numberofemissions_; ++j) {
-        if(i==0){B_[i][j] = 2/(numberofstates_+1);}
-        else{B_[i][j] = (double)(1/(numberofstates_+1));std::cerr << (numberofstates_+1)<<std::endl;};
+        B_[i][j] = 0;
       }
     }
-
+    
     for (int i = 0; i < numberofstates_; ++i) {
       pi_[i] = 0;
     }
-    ///infoAB();
 }
 
 Hmm::Hmm(int numberofstates, int numberofemissions, double** A, double** B, double* pi) {
     numberofstates_ = numberofstates;
     numberofemissions_ = numberofemissions;
-
+    
     A_ = new double*[numberofstates_];
     for (int i = 0; i < numberofstates_; ++i) {
 		A_[i] = new double[numberofstates_];
@@ -74,21 +71,12 @@ Hmm::Hmm(int numberofstates, int numberofemissions, double** A, double** B, doub
     }
 }
 
-void Hmm::info()
-{
-    std::cerr << "Vecteur :";
-    for(int i=0;i<5;++i)
-    {
-        std::cerr << pi_[i];
-    }
-    std::cerr << std::endl;
-}
   /**
-   * Estimates the probability distribution of the next emission, given the
+   * Estimates the probability distribution of the next emission, given the 
    * current state probability distribution.
-   *
+   * 
    * Note that this method solves the preparatory exercise HMM1.
-   *
+   * 
    */
   double* Hmm::estimateProbabilityDistributionOfNextEmission(
       double* currentstateprobabilitydistribution){
@@ -96,7 +84,7 @@ void Hmm::info()
     for(int i = 0; i < numberofstates_; i++){
       for(int j = 0; j < numberofstates_; j++){
         for(int k = 0; k < numberofemissions_; k++){
-          probabilityofmoves[k] +=
+          probabilityofmoves[k] += 
               currentstateprobabilitydistribution[j]*A_[j][i]*B_[i][k];
         }
       }
@@ -107,7 +95,7 @@ void Hmm::info()
   /**
    * Estimates the probability of a sequence of observed emissions, assuming
    * this HMM.
-   *
+   * 
    * Note that this method solves the preparatory exercise HMM2.
    */
   double Hmm::estimateProbabilityOfEmissionSequence(int* O, int numberofobservations){
@@ -120,7 +108,7 @@ void Hmm::info()
     for (int i = 0; i < numberofstates_; ++i) {
       alpha[0][i]=pi_[i]*B_[i][O[0]];
     }
-
+    
     for (int t = 1; t < numberofobservations; ++t) {
       for (int i = 0; i < numberofstates_; ++i) {
         for (int j = 0; j < numberofstates_; ++j) {
@@ -128,21 +116,21 @@ void Hmm::info()
         }
       }
     }
-
+   
     for (int i = 0; i < numberofstates_; ++i) {
       probability += alpha[(numberofobservations-1)][i];
     }
     return probability;
   }
-
+  
   /**
    * Estimates the hidden states from which a sequence of emissions were
    * observed.
-   *
+   * 
    * Note that this method solves the preparatory exercise HMM3.
    */
   int* Hmm::estimateStateSequence(int* O, int numberofobservations){
-
+    
     double** alpha = new double*[numberofobservations];
     for (int i = 0; i < numberofobservations; ++i) {
 		alpha[i] = new double[numberofstates_];
@@ -152,14 +140,14 @@ void Hmm::info()
     for (int i = 0; i < numberofobservations; ++i) {
 		path[i] = new int[numberofstates_];
 	}
-
+    
     int* finalpath = new int[numberofobservations];
     double maxprobability;
-
+    
     for (int i = 0; i < numberofstates_; ++i) {
       alpha[0][i]=pi_[i]*B_[i][O[0]];
     }
-
+    
     for (int t = 1; t < numberofobservations; ++t) {
       for (int i = 0; i < numberofstates_; ++i) {
         maxprobability = 0.0;
@@ -187,10 +175,10 @@ void Hmm::info()
 
     return finalpath;
   }
-
+  
 /**
    * Re-estimates this HMM from a sequence of observed emissions.
-   *
+   * 
    * Note that this method solves the preparatory exercise HMM4.
    */
   void Hmm::estimateModel(int* O, int numberofobservations){
@@ -205,7 +193,7 @@ void Hmm::info()
     for (int i = 0; i < numberofobservations; ++i) {
 		alpha[i] = new double[numberofstates_];
 	}
-
+	
     double** beta = new double*[numberofobservations];
     for (int i = 0; i < numberofobservations; ++i) {
 		beta[i] = new double[numberofstates_];
@@ -233,7 +221,7 @@ void Hmm::info()
         alpha[0][i]=pi_[i]*B_[i][O[0]];
         C[0] += alpha[0][i];
       }
-
+      
       if (C[0] != 0){
         C[0] = 1.0/C[0];
       }
@@ -251,21 +239,21 @@ void Hmm::info()
           alpha[t][i]=alpha[t][i]*B_[i][O[t]];
           C[t] += alpha[t][i];
         }
-
+        
         if (C[t] != 0){
           C[t] = 1.0/C[t];
         }
         for (int i = 0; i < numberofstates_; ++i) {
           alpha[t][i]=C[t]*alpha[t][i];
-        }
+        } 
       }
-
+      
       /* Computation of beta */
-
+        
       for (int i = 0; i < numberofstates_; ++i) {
         beta[(numberofobservations-1)][i] = C[numberofobservations-1];
       }
-
+ 
       for (int t = numberofobservations-2; t >= 0; --t){
         for (int i = 0; i < numberofstates_; ++i) {
           beta[t][i] = 0;
@@ -277,7 +265,7 @@ void Hmm::info()
       }
 
       /* Computation of gamma and xi */
-
+      
       for (int t = 0; t < numberofobservations-1; ++t) {
         denom = 0;
         for (int i = 0; i < numberofstates_; ++i) {
@@ -309,14 +297,14 @@ void Hmm::info()
         gamma[numberofobservations-1][i] = 0.0;
         gamma[numberofobservations-1][i] += (alpha[numberofobservations-1][i]*beta[numberofobservations-1][i])/denom;
       }
-
+      
       /* Re-estimate A,B and pi */
-
+      
       //Pi
       for (int i = 0; i < numberofstates_; ++i) {
         pi_[i] = gamma[0][i];
       }
-
+      
       //A
       for (int i = 0; i < numberofstates_; ++i) {
         for (int j = 0; j < numberofstates_; ++j) {
@@ -331,7 +319,7 @@ void Hmm::info()
           } else {
             A_[i][j] = 0;
           }
-
+            
         }
       }
 
@@ -353,9 +341,9 @@ void Hmm::info()
           }
         }
       }
-
+      
       /* Compute log probability for model generating observed sequence */
-
+      
       logprob = 0.0;
       for (int t = 0; t < numberofobservations; ++t) {
         if (C[t] != 0){
@@ -370,7 +358,7 @@ void Hmm::info()
         finished = true;
       }
     }
-  }
+  } 
 
   /**
    * Copies a HMM onto this one.
@@ -388,7 +376,7 @@ void Hmm::info()
       }
     }
   }
-
+  
   /**
    * Divides all the entries of A, B and pi by a divisor.
    */
@@ -407,7 +395,7 @@ void Hmm::info()
       pi_[i] = pi_[i] / divisor;
     }
 }
-
+  
   /**
    * Multiplies all the entries of A, B and pi with a factor.
    */
@@ -426,7 +414,7 @@ void Hmm::info()
       pi_[i] = pi_[i] * factor;
     }
   }
-
+  
   /**
    * Adds all the entries of A, B and pi of a HMM to the corresponding entries
    * of this HMM.
@@ -438,42 +426,11 @@ void Hmm::info()
       }
       pi_[i] += hmm->pi_[i];
     }
-
+    
     for (int i = 0; i < numberofstates_; ++i){
       for (int j = 0; j < numberofemissions_; ++j){
         B_[i][j] += hmm->B_[i][j];
       }
     }
   }
-
-
-  void Hmm::infoAB()
-    {
-        std::cerr << "Matrice A : "<<std::endl;
-        for(int i=0;i<numberofstates_;++i)
-        {
-            for(int j=0;j<numberofstates_;++j)
-            {
-                if(A_[i][j]<0.0001)
-                {
-                    std::cerr << 0 << " ";
-                }
-                else
-                {
-                    std::cerr << A_[i][j] << " ";
-                }
-            }
-            std::cerr << std::endl;
-        }
-        std::cerr << "Matrice B : "<<std::endl;
-        for(int i=0;i<numberofstates_;++i)
-        {
-            for(int j=0;j<numberofemissions_;++j)
-            {
-                std::cerr << B_[i][j] << " ";
-            }
-            std::cerr << std::endl;
-        }
-    }
-
 } /* namespace ducks */

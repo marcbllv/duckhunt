@@ -27,7 +27,6 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
             for(int i=0;i<NbBirds;++i)
             {
                 Hmm* h = new Hmm(5,9);
-                std::cout << "lol";
                 ///h.infoAB();
                 int l = pState.getBird(i).getSeqLength();
                 int *p = new int[l];
@@ -82,7 +81,6 @@ void Player::hit(const GameState &pState, int pBird, const Deadline &pDue)
     /*
      * If you hit the bird you are trying to shoot, you will be notified through this function.
      */
-     pState.info();
     std::cerr << "HIT BIRD!!!" << std::endl;
 }
 

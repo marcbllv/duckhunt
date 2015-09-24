@@ -3,7 +3,6 @@
 
 #include "Bird.hpp"
 #include <vector>
-#include "iostream"
 
 namespace ducks
 {
@@ -14,59 +13,6 @@ namespace ducks
 class GameState
 {
 public:
-
-    void info() const
-    {
-        if((int)getNumBirds()==0)
-        {
-            std::cerr << "No bird on the game" << std::endl;
-        }
-        else
-        {
-            for(unsigned int i=0;i<getNumBirds();++i)
-            {
-                std::cerr << " Bird : " << i;
-                for(int j=0;j<getBird(i).getSeqLength();++j)
-                {
-                    std::cerr << toString(getBird(i).getObservation(j)) << " ";
-                }
-                std::cerr << std::endl;
-            }
-        }
-    }
-
-    std::string toString(EMovement e) const
-    {
-        switch(e)
-        {
-            case MOVE_DOWN:
-                return "MOVE_DOWN";
-                case MOVE_DOWN_LEFT:
-                return "MOVE_DOWN_LEFT";
-                case MOVE_DOWN_RIGHT:
-                return "MOVE_DOWN_RIGHT";
-                case MOVE_LEFT:
-                return "MOVE_LEFT";
-                case MOVE_RIGHT:
-                return "MOVE_RIGHT";
-                case MOVE_UP:
-                return "MOVE_UP";
-                case MOVE_UP_LEFT:
-                return "MOVE_UP_LEFT";
-                case MOVE_UP_RIGHT:
-                return "MOVE_UP_RIGHT";
-                case MOVE_STOPPED:
-                return "MOVE_STOPPED";
-                case MOVE_DEAD:
-                return " >MOVE_DEAD< ";
-                default:
-                    return "MVT NON IDENTIFIE !";
-        }
-    }
-
-
-
-
     ///returns what round we are currently playing
     int getRound() const
     {
