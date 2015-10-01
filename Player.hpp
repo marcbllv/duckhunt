@@ -12,6 +12,9 @@ namespace ducks
 
 class Player
 {
+private:
+    int NStates;
+
 public:
     /**
      * Constructor
@@ -25,29 +28,66 @@ public:
         {
             case MOVE_DOWN:
                 return 0;
-                case MOVE_DOWN_LEFT:
+            case MOVE_DOWN_LEFT:
                 return 1;
-                case MOVE_DOWN_RIGHT:
+            case MOVE_DOWN_RIGHT:
                 return 2;
-                case MOVE_LEFT:
+            case MOVE_LEFT:
+                return 3;
+            case MOVE_RIGHT:
                 return 4;
-                case MOVE_RIGHT:
+            case MOVE_UP:
                 return 5;
-                case MOVE_UP:
+            case MOVE_UP_LEFT:
                 return 6;
-                case MOVE_UP_LEFT:
+            case MOVE_UP_RIGHT:
                 return 7;
-                case MOVE_UP_RIGHT:
+            case MOVE_STOPPED:
                 return 8;
-                case MOVE_STOPPED:
+            case MOVE_DEAD:
                 return 9;
-                case MOVE_DEAD:
-                return 10;
                 default:
                     return -1;
         }
     }
 
+    EMovement toEMove(int e) const
+    {
+        switch(e)
+        {
+            case 0:
+                return MOVE_DOWN;
+            case 1:
+                return MOVE_DOWN_LEFT;
+            case 2:
+                return MOVE_DOWN_RIGHT;
+            case 3:
+                return MOVE_LEFT;
+            case 4:
+                return MOVE_RIGHT;
+            case 5:
+                return MOVE_UP;
+            case 6:
+                return MOVE_UP_LEFT;
+            case 7:
+                return MOVE_UP_RIGHT;
+            case 8:
+                return MOVE_STOPPED;
+            default:
+                return MOVE_DEAD;
+        }
+    }
+
+
+    ///Fonctions utiles pour la manipulation des matrices (int**)
+    void swapTab(int*, int, int);
+    void permutation(int*, int, int, double**, double**, double&, double**);
+    void afficherMatrice(double**, int);
+    double** creationMatricePermutation(int*, int);
+    double** transpose(double **, int);
+    double** produit(double**, double**, int);
+    double distanceMatriceN1(double**, double**, int);
+    double distanceMatriceN2(double**, double**, int);
 
     /**
      * Shoot!
