@@ -1,63 +1,53 @@
-#ifndef _DUCKS_GAMESTATE_HPP_
-#define _DUCKS_GAMESTATE_HPP_
-
-#include "Bird.hpp"
-#include <vector>
-
-namespace ducks
-{
-
 /**
  * Represents a game state
  */
-class GameState
-{
-public:
+public class GameState {
+
     ///returns what round we are currently playing
-    int getRound() const
+    int getRound()
     {
         return mRound;
     }
 
     ///returns the number of birds
-    size_t getNumBirds() const
+    int getNumBirds()
     {
-        return mBirds.size();
+        return mBirds.length;
     }
 
     ///returns a reference to the i-th bird
-    const Bird &getBird(int i) const
+    Bird getBird(int i)
     {
         return mBirds[i];
     }
 
     ///returns the index of your player among all players
-    int whoAmI() const
+    int whoAmI()
     {
         return mWhoIAm;
     }
 
     ///returns the number of players
-    int getNumPlayers() const
+    int getNumPlayers()
     {
-        return mScores.size();
+        return mScores.length;
     }
 
     ///returns your current score
-    int myScore() const
+    int myScore()
     {
         return mScores[mWhoIAm];
     }
 
     ///returns the score of the i-th player
-    int getScore(int i) const
+    int getScore(int i)
     {
         return mScores[i];
     }
 
     ///returns the number of turns elapsed since last time Shoot was called.
     ///this is the amount of new data available for each bird
-    int getNumNewTurns() const
+    int getNumNewTurns()
     {
         return mNumNewTurns;
     }
@@ -66,30 +56,30 @@ public:
      * The following methods are used by the Client class.
      * Don't use them yourself!
      */
-    GameState(int pWhoIAm, int pNumPlayers)
-        : mRound(-1)
-        , mWhoIAm(pWhoIAm)
-        , mNumNewTurns(0)
-        , mScores(pNumPlayers, 0)
+    public GameState(int pWhoIAm, int pNumPlayers)
     {
+        mWhoIAm = pWhoIAm;
+        mScores = new int[pNumPlayers];
+        mRound = -1;
     }
 
     void newRound(int pRound, int pNumBirds)
     {
-        // Clear the sky and fill it with new birds
         mRound = pRound;
-        mBirds.assign(pNumBirds, Bird());
+        mBirds = new Bird[pNumBirds];
+        for (int b = 0; b < pNumBirds; ++b)
+            mBirds[b] = new Bird();
         mNumNewTurns = 0;
     }
 
-    void addMoves(std::vector<EMovement> pMoves)
+    void addMoves(int pMoves[])
     {
-        for (size_t b = 0; b < mBirds.size(); ++b)
+        for (int b = 0; b < mBirds.length; ++b)
             mBirds[b].addObservation(pMoves[b]);
         mNumNewTurns += 1;
     }
 
-    void setScores(std::vector<int> pScores)
+    void setScores(int pScores[])
     {
         mScores = pScores;
     }
@@ -99,14 +89,9 @@ public:
         mNumNewTurns = 0;
     }
 
-private:
-    int mRound;
-    int mWhoIAm;
-    int mNumNewTurns;
-    std::vector<Bird> mBirds;
-    std::vector<int> mScores;
-};
-
-} /*namespace ducks*/
-
-#endif
+    private int mRound;
+    private int mWhoIAm;
+    private int mNumNewTurns;
+    private Bird[] mBirds;
+    private int[] mScores;
+}

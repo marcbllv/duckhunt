@@ -10,7 +10,7 @@ all: $(EXE)
 $(EXE): $(OBJFILES)
 	$(LINK.cpp) $(LOADLIBES) $(LDLIBS) $^ -o $@
 
-gameself:
+game:
 	rm -f $(FIFO) && mkfifo $(FIFO)
 	./$(EXE) server < $(FIFO) | ./$(EXE) verbose > $(FIFO)
 

@@ -1,53 +1,8 @@
-#ifndef _DUCKS_PLAYER_HPP_
-#define _DUCKS_PLAYER_HPP_
 
-#include "Deadline.hpp"
-#include "GameState.hpp"
-#include "Action.hpp"
-#include "hmm.hpp"
-#include <vector>
+class Player {
 
-namespace ducks
-{
-
-class Player
-{
-public:
-    /**
-     * Constructor
-     * There is no data in the beginning, so not much should be done here.
-     */
-    Player();
-
-    int toInt(EMovement e) const
-    {
-        switch(e)
-        {
-            case MOVE_DOWN:
-                return 0;
-                case MOVE_DOWN_LEFT:
-                return 1;
-                case MOVE_DOWN_RIGHT:
-                return 2;
-                case MOVE_LEFT:
-                return 4;
-                case MOVE_RIGHT:
-                return 5;
-                case MOVE_UP:
-                return 6;
-                case MOVE_UP_LEFT:
-                return 7;
-                case MOVE_UP_RIGHT:
-                return 8;
-                case MOVE_STOPPED:
-                return 9;
-                case MOVE_DEAD:
-                return 10;
-                default:
-                    return -1;
-        }
+    public Player() {
     }
-
 
     /**
      * Shoot!
@@ -55,7 +10,7 @@ public:
      * This is the function where you start your work.
      *
      * You will receive a variable pState, which contains information about all
-     * birds, both dead and alive. Each birds contains all past actions.
+     * birds, both dead and alive. Each bird contains all past moves.
      *
      * The state also contains the scores for all players and the number of
      * time steps elapsed since the last time this function was called.
@@ -64,7 +19,18 @@ public:
      * @param pDue time before which we must have returned
      * @return the prediction of a bird we want to shoot at, or cDontShoot to pass
      */
-    Action shoot(const GameState &pState, const Deadline &pDue);
+    public Action shoot(GameState pState, Deadline pDue) {
+        /*
+         * Here you should write your clever algorithms to get the best action.
+         * This skeleton never shoots.
+         */
+
+        // This line chooses not to shoot.
+        return cDontShoot;
+
+        // This line would predict that bird 0 will move right and shoot at it.
+        // return Action(0, MOVE_RIGHT);
+    }
 
     /**
      * Guess the species!
@@ -78,7 +44,17 @@ public:
      * @param pDue time before which we must have returned
      * @return a vector with guesses for all the birds
      */
-    std::vector<ESpecies> guess(const GameState &pState, const Deadline &pDue);
+    public int[] guess(GameState pState, Deadline pDue) {
+        /*
+         * Here you should write your clever algorithms to guess the species of
+         * each bird. This skeleton makes no guesses, better safe than sorry!
+         */
+
+        int[] lGuess = new int[pState.getNumBirds()];
+        for (int i = 0; i < pState.getNumBirds(); ++i)
+            lGuess[i] = Constants.SPECIES_UNKNOWN;
+        return lGuess;
+    }
 
     /**
      * If you hit the bird you were trying to shoot, you will be notified
@@ -88,7 +64,9 @@ public:
      * @param pBird the bird you hit
      * @param pDue time before which we must have returned
      */
-    void hit(const GameState &pState, int pBird, const Deadline &pDue);
+    public void hit(GameState pState, int pBird, Deadline pDue) {
+        System.err.println("HIT BIRD!!!");
+    }
 
     /**
      * If you made any guesses, you will find out the true species of those
@@ -98,9 +76,8 @@ public:
      * @param pSpecies the vector with species
      * @param pDue time before which we must have returned
      */
-    void reveal(const GameState &pState, const std::vector<ESpecies> &pSpecies, const Deadline &pDue);
-};
+    public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
+    }
 
-} /*namespace ducks*/
-
-#endif
+    public static final Action cDontShoot = new Action(-1, -1);
+}
