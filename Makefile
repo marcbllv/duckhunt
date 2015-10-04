@@ -4,7 +4,7 @@ JFLAGS = -Xlint:all
 SRC = $(wildcard *.java)
 
 EXE = ducks
-CLASSES = $(wildcard *.java)
+CLASSES = $(wildcard *.class)
 FIFO = player2server
 
 all: $(EXE)
