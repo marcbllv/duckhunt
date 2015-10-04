@@ -1,20 +1,22 @@
-CC = g++
-CXXFLAGS = -Wall -std=c++0x 
+JC = javac
+JFLAGS = -Xlint:all
+
+SRC = $(wildcard *.java)
 
 EXE = ducks
-OBJFILES = main.o hmm.o Player.o GameServer.o Client.o
+CLASSES = $(wildcard *.java)
 FIFO = player2server
 
 all: $(EXE)
 
-$(EXE): $(OBJFILES)
-	$(LINK.cpp) $(LOADLIBES) $(LDLIBS) $^ -o $@
+$(EXE): $(SRC)
+	$(JC) $(JFLAGS) $^ 
 
 game:
 	rm -f $(FIFO) && mkfifo $(FIFO)
-	./$(EXE) server < $(FIFO) | ./$(EXE) verbose > $(FIFO)
+	java Main server < $(FIFO) | java Main verbose > $(FIFO)
 
 clean:
 	rm -f $(EXE)
-	rm -f $(OBJFILES)
+	rm -f $(CLASSES)
 	rm -f $(FIFO)
