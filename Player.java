@@ -137,6 +137,7 @@ class Player {
             double[][] B_init;
             double[] pi_init;
             if(!speciesSeen[pSpecies[i]]) {
+                System.err.println("Seen : " + pSpecies[i] + ", rand init");
                 // If we havn't seen this species before : random init
                 A_init = randStochMat(5,5);
                 B_init = randStochMat(5,9);
@@ -146,6 +147,7 @@ class Player {
                     pi_init[j] = pi_init_2D[0][j];
                 }
             } else {
+                System.err.println("Seen : " + pSpecies[i] + ", not rand init");
                 // Else : we can start with the species matrix
                 A_init = As[pSpecies[i]];
                 B_init = Bs[pSpecies[i]];
@@ -169,17 +171,19 @@ class Player {
                 double[][] A_p = Player.permut(As[pSpecies[i]], h.A);
                 // Saving new matrix for the current species
                 // TODO : not that good to make the mean each time, change that line:
+                //
+                // h.A is NAN ??!?!??
+                //
                 As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], A_p);
             }
         }
 
-        for(int i = 0 ; i < 7 ; i++) {
-            if(speciesSeen[i]) {
-                System.err.println("Species " + i + " A matrix:");
-                Player.printMat(As[i]);
-            }
-        }
-        System.err.println();
+        //for(int i = 0 ; i < 7 ; i++) {
+        //    if(speciesSeen[i]) {
+        //        System.err.println("Species " + i + " A matrix:");
+        //        Player.printMat(As[i]);
+        //    }
+        //}
     }
 
     // This function looks for the best permutation to make A1 and A2 closer
