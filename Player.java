@@ -54,7 +54,8 @@ class Player {
                 lGuess[i] = Constants.SPECIES_PIGEON;
             }
         } else {
-            System.err.println("Round " + pState.getRound() + " " + pState.getNumBirds() + " birds");
+            System.err.println("Round " + pState.getRound() + " " + pState.getNumBirds() + " birds.");
+            System.err.print("Guessing    :");
             for(int i = 0 ; i < pState.getNumBirds() ; i++) {
                 Bird b = pState.getBird(i);
 
@@ -79,18 +80,33 @@ class Player {
 
                 // Comparing matrices with all species to get the closer
                 double minErr = 10000;
-                Double err = new Double(0.0);
                 int probableSp = -1;
-                for(int sp = 0 ; sp < 7 ; sp++) {
-                    Player.permut(As[sp], h.A, err);
+                Permut p;
+                for(int sp = 0 ; sp < 6 ; sp++) {
+                    //p = Player.permut(As[sp], h.A);
+                    //if(p.err < minErr) {
+                    //    minErr = p.err;
+                    //    probableSp = sp;
+                    //}
+                    double err = 0.0;
+                    for (int k = 0 ; k < 5 ; k++) {
+                        for(int l = 0 ; l < 5 ; l++) {
+                            err += (As[sp][k][l] - h.A[k][l]) * (As[sp][k][l] - h.A[k][l]);
+                        }
+                    }
+
                     if(err < minErr) {
                         minErr = err;
                         probableSp = sp;
                     }
                 }
-
                 lGuess[i] = probableSp;
+                System.err.print(" " + probableSp);
+                
+                h = null;
             }
+
+            System.err.println();
         }
         return lGuess;
     }
@@ -117,12 +133,6 @@ class Player {
      */
     public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
 
-        System.err.print("Reveal part - Species seen : ");
-        for(int i = 0 ; i < pSpecies.length ; i++) {
-            System.err.print(pSpecies[i] + " ");
-        }
-        System.err.println();
-
         for(int i = 0 ; i < pState.getNumBirds() ; i++) {
             Bird b = pState.getBird(i);
 
@@ -136,22 +146,21 @@ class Player {
             double[][] A_init;
             double[][] B_init;
             double[] pi_init;
+            //if(true) {
             if(!speciesSeen[pSpecies[i]]) {
-                System.err.println("Seen : " + pSpecies[i] + ", rand init");
                 // If we havn't seen this species before : random init
                 A_init = randStochMat(5,5);
                 B_init = randStochMat(5,9);
-                double[][] pi_init_2D = randStochMat(1,5);
-                pi_init = new double[5];
-                for(int j = 0 ; j < 5 ; j++) {
-                    pi_init[j] = pi_init_2D[0][j];
-                }
             } else {
-                System.err.println("Seen : " + pSpecies[i] + ", not rand init");
                 // Else : we can start with the species matrix
                 A_init = As[pSpecies[i]];
                 B_init = Bs[pSpecies[i]];
-                pi_init = pis[pSpecies[i]];
+                //pi_init = pis[pSpecies[i]];
+            }
+            double[][] pi_init_2D = randStochMat(1,5);
+            pi_init = new double[5];
+            for(int j = 0 ; j < 5 ; j++) {
+                pi_init[j] = pi_init_2D[0][j];
             }
 
             HMM h = new HMM(A_init, B_init, pi_init);
@@ -159,6 +168,16 @@ class Player {
             // Train hmm
             h.estimateModel(bSeq);
 
+//            if(Double.isNaN(h.A[0][0])) {
+//                System.err.println(" - h.A IS NAN !! Here are the init matrices:");
+//                Player.printMat(A_init);
+//                Player.printMat(B_init);
+//                for(int k = 0 ; k < 5 ; k++) {
+//                    System.err.printf("%.8f ", pi_init[k]);
+//                }
+//                System.err.print("\n");
+//            }
+//
             // First time we see this species
             if(!speciesSeen[pSpecies[i]]) {
                 speciesSeen[pSpecies[i]] = true;
@@ -168,14 +187,17 @@ class Player {
                 pis[pSpecies[i]] = h.pi;
             } else {
                 // Apply most probable permutation to h.A
-                double[][] A_p = Player.permut(As[pSpecies[i]], h.A);
-                // Saving new matrix for the current species
+                Permut p = Player.permut(As[pSpecies[i]], h.A);
                 // TODO : not that good to make the mean each time, change that line:
-                //
-                // h.A is NAN ??!?!??
-                //
-                As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], A_p);
+                //As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], p.M);
+                
+                // Not applying permutation to save time
+                As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], h.A);
+
+                //makeStochastic(As[pSpecies[i]]);
             }
+
+            h = null;
         }
 
         //for(int i = 0 ; i < 7 ; i++) {
@@ -187,13 +209,7 @@ class Player {
     }
 
     // This function looks for the best permutation to make A1 and A2 closer
-    public static double[][] permut(double[][] A1, double[][] A2) {
-        Double d = new Double(0.0);
-        return permut(A1, A2, d);
-    }
-
-    // Same function but the error |A1 - A2|^2 is stored in the error parameter
-    public static double[][] permut(double[][] A1, double[][] A2, Double error) {
+    public static Permut permut(double[][] A1, double[][] A2) {
 
         int[] p = new int[] {0,1,2,3,4};
         int[] minP = new int[] {0,1,2,3,4};
@@ -240,8 +256,6 @@ class Player {
         }
         }
 
-        error = new Double(minErr);
-
         // Now let's apply the permutation on A2
         double[][] A2_permut = new double[5][5];
         for(int i = 0 ; i < 5 ; i++) {
@@ -249,7 +263,9 @@ class Player {
                 A2_permut[i][j] = A2[minP[i]][minP[j]];
             }
         }
-        return A2_permut;
+
+        Permut permut = new Permut(A2_permut, minErr);
+        return permut;
     }
 
     // Compute the mean of A1 & A2
@@ -266,11 +282,17 @@ class Player {
 
     // Just print the matrix
     public static void printMat(double[][] M) {
-        for(int i = 0 ; i < 5 ; i++) {
-            for(int j = 0 ; j < 5 ; j++) {
+        double sum = 0.0;
+        int nL = M.length;
+        int nR = M[0].length;
+
+        for(int i = 0 ; i < nL ; i++) {
+            sum = 0.0;
+            for(int j = 0 ; j < nR ; j++) {
                 System.err.printf("%.4f ", M[i][j]);
+                sum += M[i][j];
             }
-            System.err.println();
+            System.err.printf(" = %.8f\n", sum);
         }
         System.err.println();
     }
@@ -302,11 +324,37 @@ class Player {
         return M;
     }
 
+    // This method adjusts M to make it a stochastic matix
+    // It divides all lines by its sum so that they sum to 1
+    // Assuming all coefficients are positives and the sum is non null
+    public static void makeStochastic(double[][] M) {
+        double sum;
+        for(int i = 0 ; i < M.length ; i++) {
+            sum = 0.0;
+            for(int j = 0 ; j < M[0].length ; j++) {
+                sum += M[i][j];
+            }
+            for(int j = 0 ; j < M[0].length ; j++) {
+                M[i][j] /= sum;
+            }
+        }
+    }
+
     public static final Action cDontShoot = new Action(-1, -1);
 
     public static boolean[] speciesSeen = new boolean[] 
-        {false, false, false, false, false, false, false};
-    public static double[][][] As = new double[7][5][5];
-    public static double[][][] Bs = new double[7][5][9];
-    public static double[][] pis = new double[7][5];
+        {false, false, false, false, false, false};
+    public static double[][][] As = new double[6][5][5];
+    public static double[][][] Bs = new double[6][5][9];
+    public static double[][] pis = new double[6][5];
+
+    private static class Permut {
+        double[][] M;
+        double err;
+
+        Permut(double[][] M, double err) {
+            this.M = M;
+            this.err = err;
+        }
+    }
 }
