@@ -1,7 +1,13 @@
 import java.util.Vector;
 import java.util.Random;
+import java.util.ArrayList;
 
 class Player {
+
+    public static ArrayList<HMM> roundHmms;
+    public static HMM[] speciesHmm = new HMM[6];
+    public static int mvmt = 0;
+    public static boolean[] speciesSeen = new boolean[] {false, false, false, false, false, false};
 
     public Player() {
     }
@@ -27,7 +33,44 @@ class Player {
          * This skeleton never shoots.
          */
 
+        if(mvmt == 0) {
+            if(pState.getRound() > 0)
+                roundHmms.clear();
+
+            ArrayList<HMM> hmms = new ArrayList<HMM>();
+
+            // Init HMM for each bird :
+            for(int i = 0 ; i < pState.getNumBirds() ; i++) {
+                double[][] A_init = randStochMat(5,5);
+                double[][] B_init = randStochMat(5,9);
+                double[][] pi_init_2D = randStochMat(1,5);
+                double[] pi_init = new double[5];
+                for(int j = 0 ; j < 5 ; j++) {
+                    pi_init[j] = pi_init_2D[0][j];
+                }
+
+                HMM h = new HMM(A_init, B_init, pi_init);
+                hmms.add(h);
+            }
+
+            roundHmms = new ArrayList<HMM>(hmms);
+        }
+
+        if(mvmt > 99) {
+            for(int i = 0 ; i < pState.getNumBirds() ; i++) {
+                // Get the sequence of observations
+                int[] bSeq = new int[mvmt + 1];
+                for(int j = 0 ; j < bSeq.length ; j++) {
+                    bSeq[j] = pState.getBird(i).getObservation(j);
+                }
+                roundHmms.get(i).estimateModel(bSeq);
+                Player.smoothStoch(roundHmms.get(i).A);
+                Player.smoothStoch(roundHmms.get(i).B);
+            }
+        }
         // This line chooses not to shoot.
+
+        mvmt++;
         return cDontShoot;
 
         // This line would predict that bird 0 will move right and shoot at it.
@@ -54,60 +97,36 @@ class Player {
                 lGuess[i] = Constants.SPECIES_PIGEON;
             }
         } else {
-            System.err.println("Round " + pState.getRound() + " " + pState.getNumBirds() + " birds.");
-            System.err.print("Guessing    :");
-            for(int i = 0 ; i < pState.getNumBirds() ; i++) {
-                Bird b = pState.getBird(i);
+            for (int i = 0; i < pState.getNumBirds(); ++i) {
 
-                // Get the sequence of observations
                 int[] bSeq = new int[99];
                 for(int j = 0 ; j < bSeq.length ; j++) {
-                    bSeq[j] = b.getObservation(j);
+                    bSeq[j] = pState.getBird(i).getObservation(j);
                 }
 
-                double[][] A_init = randStochMat(5,5);
-                double[][] B_init = randStochMat(5,9);
-                double[][] pi_init_2D = randStochMat(1,5);
-                double[] pi_init = new double[5];
-                for(int j = 0 ; j < 5 ; j++) {
-                    pi_init[j] = pi_init_2D[0][j];
-                }
+                HMM birdHmm = Player.roundHmms.get(i);
+                double proba = -1, maxProba = -1;
+                int mostProbSp = -1;
 
-                HMM h = new HMM(A_init, B_init, pi_init);
-
-                // Train hmm
-                h.estimateModel(bSeq);
-
-                // Comparing matrices with all species to get the closer
-                double minErr = 10000;
-                int probableSp = -1;
-                Permut p;
-                for(int sp = 0 ; sp < 6 ; sp++) {
-                    //p = Player.permut(As[sp], h.A);
-                    //if(p.err < minErr) {
-                    //    minErr = p.err;
-                    //    probableSp = sp;
-                    //}
-                    double err = 0.0;
-                    for (int k = 0 ; k < 5 ; k++) {
-                        for(int l = 0 ; l < 5 ; l++) {
-                            err += (As[sp][k][l] - h.A[k][l]) * (As[sp][k][l] - h.A[k][l]);
+                for(int k = 0 ; k < 6 ; k++) {
+                    if(speciesSeen[k]) {
+                        proba = (speciesHmm[k]).estimateProbabilityOfEmissionSequence(bSeq);
+                        if(proba > maxProba) {
+                            maxProba = proba;
+                            mostProbSp = k;
                         }
                     }
-
-                    if(err < minErr) {
-                        minErr = err;
-                        probableSp = sp;
-                    }
                 }
-                lGuess[i] = probableSp;
-                System.err.print(" " + probableSp);
-                
-                h = null;
-            }
 
-            System.err.println();
+                lGuess[i] = mostProbSp;
+            }
         }
+        System.err.println();
+        System.err.print("Round : " + pState.getRound() + ", guesses: ");
+        for(int i = 0 ; i < lGuess.length ; i++) {
+            System.err.print(lGuess[i] + " ");
+        }
+        System.err.println();
         return lGuess;
     }
 
@@ -133,80 +152,43 @@ class Player {
      */
     public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
 
+        System.err.print("Reveal:             ");
         for(int i = 0 ; i < pState.getNumBirds() ; i++) {
-            Bird b = pState.getBird(i);
+            System.err.print(pSpecies[i] + " ");
 
-            // Get the sequence of observations
-            int[] bSeq = new int[99];
-            for(int j = 0 ; j < bSeq.length ; j++) {
-                bSeq[j] = b.getObservation(j);
-            }
-
-            // Init Matrices & Hmm
-            double[][] A_init;
-            double[][] B_init;
-            double[] pi_init;
-            //if(true) {
-            if(!speciesSeen[pSpecies[i]]) {
-                // If we havn't seen this species before : random init
-                A_init = randStochMat(5,5);
-                B_init = randStochMat(5,9);
-            } else {
-                // Else : we can start with the species matrix
-                A_init = As[pSpecies[i]];
-                B_init = Bs[pSpecies[i]];
-                //pi_init = pis[pSpecies[i]];
-            }
-            double[][] pi_init_2D = randStochMat(1,5);
-            pi_init = new double[5];
-            for(int j = 0 ; j < 5 ; j++) {
-                pi_init[j] = pi_init_2D[0][j];
-            }
-
-            HMM h = new HMM(A_init, B_init, pi_init);
-
-            // Train hmm
-            h.estimateModel(bSeq);
-
-//            if(Double.isNaN(h.A[0][0])) {
-//                System.err.println(" - h.A IS NAN !! Here are the init matrices:");
-//                Player.printMat(A_init);
-//                Player.printMat(B_init);
-//                for(int k = 0 ; k < 5 ; k++) {
-//                    System.err.printf("%.8f ", pi_init[k]);
-//                }
-//                System.err.print("\n");
-//            }
-//
-            // First time we see this species
             if(!speciesSeen[pSpecies[i]]) {
                 speciesSeen[pSpecies[i]] = true;
-
-                As[pSpecies[i]] = h.A;
-                Bs[pSpecies[i]] = h.B;
-                pis[pSpecies[i]] = h.pi;
+                speciesHmm[pSpecies[i]] = roundHmms.get(i);
             } else {
-                // Apply most probable permutation to h.A
-                Permut p = Player.permut(As[pSpecies[i]], h.A);
-                // TODO : not that good to make the mean each time, change that line:
-                //As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], p.M);
-                
-                // Not applying permutation to save time
-                As[pSpecies[i]] = Player.meanMat(As[pSpecies[i]], h.A);
+                // Reestimate model
+                int[] bSeq = new int[99];
+                for(int j = 0 ; j < bSeq.length ; j++) {
+                    bSeq[j] = pState.getBird(i).getObservation(j);
+                }
 
-                //makeStochastic(As[pSpecies[i]]);
+                // Clearing hmm with smoothing function & reestimate model
+                Player.smoothStoch(speciesHmm[pSpecies[i]].A);
+                Player.smoothStoch(speciesHmm[pSpecies[i]].B);
+
+                speciesHmm[pSpecies[i]].estimateModel(bSeq);
             }
-
-            h = null;
         }
+        System.err.println();
 
-        //for(int i = 0 ; i < 7 ; i++) {
-        //    if(speciesSeen[i]) {
-        //        System.err.println("Species " + i + " A matrix:");
-        //        Player.printMat(As[i]);
-        //    }
-        //}
+        mvmt = 0;
     }
+
+    public static void smoothStoch(double[][] M) {
+        double epsilon = 0.000001;
+        for(int i = 0 ; i < M.length ; i++) {
+            for(int j = 0 ; j < M[0].length ; j++) {
+                M[i][j] += epsilon;
+                M[i][j] /= (1 + M[0].length * epsilon);
+            }
+        }
+    }
+
+
 
     // This function looks for the best permutation to make A1 and A2 closer
     public static Permut permut(double[][] A1, double[][] A2) {
@@ -342,8 +324,6 @@ class Player {
 
     public static final Action cDontShoot = new Action(-1, -1);
 
-    public static boolean[] speciesSeen = new boolean[] 
-        {false, false, false, false, false, false};
     public static double[][][] As = new double[6][5][5];
     public static double[][][] Bs = new double[6][5][9];
     public static double[][] pis = new double[6][5];

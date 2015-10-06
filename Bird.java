@@ -54,5 +54,5 @@ class Bird {
         mSeq.set(mSeq.size() - 1, Constants.MOVE_DEAD);
     }
 
-    private Vector<Integer> mSeq = new Vector<Integer>();
+    public Vector<Integer> mSeq = new Vector<Integer>();
 }
