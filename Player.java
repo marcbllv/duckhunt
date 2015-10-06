@@ -57,24 +57,25 @@ class Player {
         }
 
         if(mvmt > 99) {
-            for(int i = 0 ; i < pState.getNumBirds() ; i++) {
-                // Get the sequence of observations
-                int[] bSeq = new int[mvmt + 1];
-                for(int j = 0 ; j < bSeq.length ; j++) {
-                    bSeq[j] = pState.getBird(i).getObservation(j);
-                }
-                roundHmms.get(i).estimateModel(bSeq);
-                Player.smoothStoch(roundHmms.get(i).A);
-                Player.smoothStoch(roundHmms.get(i).B);
-            }
+            //for(int i = 0 ; i < pState.getNumBirds() ; i++) {
+            //    // Get the sequence of observations
+            //    int[] bSeq = new int[mvmt + 1];
+            //    for(int j = 0 ; j < bSeq.length ; j++) {
+            //        bSeq[j] = pState.getBird(i).getObservation(j);
+            //    }
+            //    roundHmms.get(i).estimateModel(bSeq);
+            //    Player.smoothStoch(roundHmms.get(i).A);
+            //    Player.smoothStoch(roundHmms.get(i).B);
+            //}
         }
-        // This line chooses not to shoot.
 
         mvmt++;
-        return cDontShoot;
+
+        // This line chooses not to shoot.
+        // return new Action(0, Constants.MOVE_RIGHT);
 
         // This line would predict that bird 0 will move right and shoot at it.
-        // return Action(0, MOVE_RIGHT);
+        return new Action(-1, -1);
     }
 
     /**
@@ -99,10 +100,16 @@ class Player {
         } else {
             for (int i = 0; i < pState.getNumBirds(); ++i) {
 
-                int[] bSeq = new int[99];
+                if(pState.getBird(i).isDead()) {
+                    continue;
+                }
+                int[] bSeq = new int[mvmt];
                 for(int j = 0 ; j < bSeq.length ; j++) {
                     bSeq[j] = pState.getBird(i).getObservation(j);
                 }
+                roundHmms.get(i).estimateModel(bSeq);
+                Player.smoothStoch(roundHmms.get(i).A);
+                Player.smoothStoch(roundHmms.get(i).B);
 
                 HMM birdHmm = Player.roundHmms.get(i);
                 double proba = -1, maxProba = -1;
@@ -154,6 +161,9 @@ class Player {
 
         System.err.print("Reveal:             ");
         for(int i = 0 ; i < pState.getNumBirds() ; i++) {
+            if(pState.getBird(i).isDead()) {
+                continue;
+            }
             System.err.print(pSpecies[i] + " ");
 
             if(!speciesSeen[pSpecies[i]]) {
@@ -161,7 +171,7 @@ class Player {
                 speciesHmm[pSpecies[i]] = roundHmms.get(i);
             } else {
                 // Reestimate model
-                int[] bSeq = new int[99];
+                int[] bSeq = new int[mvmt];
                 for(int j = 0 ; j < bSeq.length ; j++) {
                     bSeq[j] = pState.getBird(i).getObservation(j);
                 }
@@ -179,7 +189,7 @@ class Player {
     }
 
     public static void smoothStoch(double[][] M) {
-        double epsilon = 0.000001;
+        double epsilon = 0.0001;
         for(int i = 0 ; i < M.length ; i++) {
             for(int j = 0 ; j < M[0].length ; j++) {
                 M[i][j] += epsilon;
@@ -187,8 +197,6 @@ class Player {
             }
         }
     }
-
-
 
     // This function looks for the best permutation to make A1 and A2 closer
     public static Permut permut(double[][] A1, double[][] A2) {
